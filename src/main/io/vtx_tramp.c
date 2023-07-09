@@ -116,7 +116,7 @@ typedef struct {
 
 static vtxProtoState_t vtxState;
 
-static void vtxProtoUpdatePowerMetadata(uint16_t maxPower);
+static void vtxProtoUpdatePowerMetadata(void);
 
 static bool trampIsValidResponseCode(uint8_t code)
 {
@@ -237,7 +237,7 @@ static vtxProtoResponseType_e vtxProtoProcessResponse(void)
                 }
 
                 // Update max power metadata so OSD settings would match VTX capabilities
-                vtxProtoUpdatePowerMetadata(vtxState.capabilities.powerMax);
+                vtxProtoUpdatePowerMetadata();
 
                 return VTX_RESPONSE_TYPE_CAPABILITIES;
             }
@@ -560,79 +560,16 @@ static vtxDevice_t impl_vtxDevice = {
     .capability.powerNames = NULL,
 };
 
-const uint16_t trampPowerTable_5G8_200[VTX_TRAMP_5G8_MAX_POWER_COUNT]         = { 25, 100, 200, 200, 200 };
-const char * const trampPowerNames_5G8_200[VTX_TRAMP_5G8_MAX_POWER_COUNT + 1] = { "---", "25 ", "100", "200", "200", "200" };
+const uint16_t trampPowerTable_5G8[VTX_TRAMP_5G8_MAX_POWER_COUNT]         = { 25, 100, 400, 800, 1600 };
+const char * const trampPowerNames_5G8[VTX_TRAMP_5G8_MAX_POWER_COUNT + 1] = { "---", "25 ", "100", "400", "800", "1K6" };
 
-const uint16_t trampPowerTable_5G8_400[VTX_TRAMP_5G8_MAX_POWER_COUNT]         = { 25, 100, 200, 400, 400 };
-const char * const trampPowerNames_5G8_400[VTX_TRAMP_5G8_MAX_POWER_COUNT + 1] = { "---", "25 ", "100", "200", "400", "400" };
-
-const uint16_t trampPowerTable_5G8_600[VTX_TRAMP_5G8_MAX_POWER_COUNT]         = { 25, 100, 200, 400, 600 };
-const char * const trampPowerNames_5G8_600[VTX_TRAMP_5G8_MAX_POWER_COUNT + 1] = { "---", "25 ", "100", "200", "400", "600" };
-
-const uint16_t trampPowerTable_5G8_800[VTX_TRAMP_5G8_MAX_POWER_COUNT]         = { 25, 100, 200, 500, 800 };
-const char * const trampPowerNames_5G8_800[VTX_TRAMP_5G8_MAX_POWER_COUNT + 1] = { "---", "25 ", "100", "200", "500", "800" };
-
-const uint16_t trampPowerTable_1G3_800[VTX_TRAMP_1G3_MAX_POWER_COUNT]         = { 25, 200, 800 };
-const char * const trampPowerNames_1G3_800[VTX_TRAMP_1G3_MAX_POWER_COUNT + 1] = { "---", "25 ", "200", "800" };
-
-static void vtxProtoUpdatePowerMetadata(uint16_t maxPower)
+static void vtxProtoUpdatePowerMetadata(void)
 {
-    switch (vtxSettingsConfig()->frequencyGroup) {
-        case FREQUENCYGROUP_1G3:
-            vtxState.metadata.powerTablePtr  = trampPowerTable_1G3_800;
-            vtxState.metadata.powerTableCount = VTX_TRAMP_1G3_MAX_POWER_COUNT;
-            
-            impl_vtxDevice.capability.powerNames = (char **)trampPowerNames_1G3_800;
-            impl_vtxDevice.capability.powerCount = VTX_TRAMP_1G3_MAX_POWER_COUNT;
-            
-            impl_vtxDevice.capability.bandCount = VTX_TRAMP_1G3_BAND_COUNT;
-            impl_vtxDevice.capability.channelCount = VTX_TRAMP_1G3_CHANNEL_COUNT;
-            impl_vtxDevice.capability.bandNames = (char **)vtx1G3BandNames;
-            impl_vtxDevice.capability.channelNames = (char **)vtx1G3ChannelNames;
-            break;
-        default:
-            if (maxPower >= 800) {
-                // Max power 800mW: Use 25, 100, 200, 500, 800 table
-                vtxState.metadata.powerTablePtr  = trampPowerTable_5G8_800;
-                vtxState.metadata.powerTableCount = VTX_TRAMP_5G8_MAX_POWER_COUNT;
-                
-                impl_vtxDevice.capability.powerNames = (char **)trampPowerNames_5G8_800;
-                impl_vtxDevice.capability.powerCount = VTX_TRAMP_5G8_MAX_POWER_COUNT;
-            }
-            else if (maxPower >= 600) {
-                // Max power 600mW: Use 25, 100, 200, 400, 600 table
-                vtxState.metadata.powerTablePtr  = trampPowerTable_5G8_600;
-                vtxState.metadata.powerTableCount = VTX_TRAMP_5G8_MAX_POWER_COUNT;
-
-                impl_vtxDevice.capability.powerNames = (char **)trampPowerNames_5G8_600;
-                impl_vtxDevice.capability.powerCount = VTX_TRAMP_5G8_MAX_POWER_COUNT;
-            }
-            else if (maxPower >= 400) {
-                // Max power 400mW: Use 25, 100, 200, 400 table
-                vtxState.metadata.powerTablePtr  = trampPowerTable_5G8_400;
-                vtxState.metadata.powerTableCount = 4;
-
-                impl_vtxDevice.capability.powerNames = (char **)trampPowerNames_5G8_400;
-                impl_vtxDevice.capability.powerCount = 4;
-            }
-            else if (maxPower >= 200) {
-                // Max power 200mW: Use 25, 100, 200 table
-                vtxState.metadata.powerTablePtr  = trampPowerTable_5G8_200;
-                vtxState.metadata.powerTableCount = 3;
-
-                impl_vtxDevice.capability.powerNames = (char **)trampPowerNames_5G8_200;
-                impl_vtxDevice.capability.powerCount = 3;
-            }
-            else {
-                // Default to standard TRAMP 600mW VTX
-                vtxState.metadata.powerTablePtr  = trampPowerTable_5G8_600;
-                vtxState.metadata.powerTableCount = VTX_TRAMP_5G8_MAX_POWER_COUNT;
-
-                impl_vtxDevice.capability.powerNames = (char **)trampPowerNames_5G8_600;
-                impl_vtxDevice.capability.powerCount = VTX_TRAMP_5G8_MAX_POWER_COUNT;
-            }
-            break;
-    }
+    vtxState.metadata.powerTablePtr  = trampPowerTable_5G8;
+    vtxState.metadata.powerTableCount = VTX_TRAMP_5G8_MAX_POWER_COUNT;
+    
+    impl_vtxDevice.capability.powerNames = (char **)trampPowerNames_5G8;
+    impl_vtxDevice.capability.powerCount = VTX_TRAMP_5G8_MAX_POWER_COUNT;  
 }
 
 bool vtxTrampInit(void)
@@ -650,7 +587,7 @@ bool vtxTrampInit(void)
         return false;
     }
 
-    vtxProtoUpdatePowerMetadata(600);
+    vtxProtoUpdatePowerMetadata();
     vtxCommonSetDevice(&impl_vtxDevice);
 
     vtxState.protoState = VTX_STATE_RESET;
